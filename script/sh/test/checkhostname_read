@@ -1,0 +1,17 @@
+#!/bin/sh
+. ./CheckHostname.sh
+echo $#
+if [ $# -eq 0 ]; then
+        HOST=`hostname`
+else
+        HOST=$1
+fi
+
+CheckHostname $HOST
+STATUS=$?
+echo $HOST
+if [ "$STATUS" -eq 0 ]; then
+    echo "$HOST is availavle."
+  else
+    echo "$HOST is not available."
+fi
