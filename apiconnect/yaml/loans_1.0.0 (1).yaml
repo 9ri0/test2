@@ -1,0 +1,167 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "loans"
+  title: "loans"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/loans"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- clientIdHeader: []
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - switch:
+        title: "switch"
+        case:
+        - condition: "((request.verb==='GET')&&(api.operation.path==='/quote'))"
+          execute:
+          - if:
+              title: "if"
+              condition: "request.parameters.loan == 0"
+              execute:
+              - throw:
+                  title: "throw"
+                  version: "1.0.0"
+                  name: "inputerror"
+                  message: "inputerror"
+              version: "1.0.0"
+        - condition: "POST /quote"
+          execute:
+          - throw:
+              title: "throw"
+              version: "1.0.0"
+              name: "norequest"
+        version: "1.0.0"
+    - invoke:
+        target-url: "https://apim-services.mybluemix.net/banka/v1/loans/quote?apr=$(request.parameters.rate)&amount=$(request.parameters.loan)&term=$(request.parameters.duration)"
+        title: "loan invoke"
+        description: "融資の月次費用を取得"
+        output: "loan_invoke"
+    - map:
+        title: "map"
+        inputs:
+          Monthly_cost:
+            schema:
+              type: "float"
+            variable: "loan_invoke.body.monthly_payment"
+            content: "application/json"
+          Duration:
+            schema:
+              type: "integer"
+            variable: "request.parameters.duration"
+        outputs:
+          Quote_Output:
+            schema:
+              $ref: "#/definitions/Quote_Output"
+            variable: "message.body"
+            content: "application/json"
+        actions:
+        - set: "Quote_Output.monthly_repayment"
+          from: "Monthly_cost"
+        - set: "Quote_Output.total_cost"
+          from:
+          - "Monthly_cost"
+          - "Duration"
+          value: "$(Duration)*$(Monthly_cost)"
+        version: "1.0.0"
+    - json-to-xml:
+        title: "json-to-xml"
+        root-element-name: "json"
+        always-output-root-element: false
+        version: "1.0.0"
+    catch:
+    - errors:
+      - "inputerror"
+      execute:
+      - set-variable:
+          title: "inputerror"
+          actions:
+          - set: "message.body"
+            value: "{\\\"message\\\":\\\"loan input error\\\"}"
+          - set: "message.status.code"
+            value: "400"
+          - set: "message.headers.content-type"
+            value: "application/json"
+          version: "1.0.0"
+    - errors:
+      - "norequest"
+      execute:
+      - set-variable:
+          title: "norequest"
+          actions:
+          - set: "message.body"
+            value: "{\\\"message\\\":\\\"no request\\\"}"
+          - set: "message.status.code"
+            value: "400"
+          - set: "message.headers.content-type"
+            value: "application/json"
+          version: "1.0.0"
+  phase: "realized"
+  properties:
+    prpt1:
+      value: ""
+      description: ""
+      encoded: false
+  catalogs:
+    cat01:
+      properties:
+        prpt1: "12345678"
+paths:
+  /quote:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+          schema:
+            $ref: "#/definitions/Quote_Output"
+      parameters:
+      - name: "rate"
+        type: "number"
+        required: true
+        in: "query"
+        description: "利率"
+        format: "float"
+      - name: "loan"
+        type: "number"
+        required: true
+        in: "query"
+        description: "融資額"
+        format: "float"
+      - name: "duration"
+        type: "integer"
+        required: true
+        in: "query"
+        description: "融資期間"
+        format: "int32"
+definitions:
+  Quote_Output:
+    properties:
+      monthly_repayment:
+        type: "number"
+        description: "融資の毎月の返済額。"
+        format: "float"
+        example: 46.35
+      total_cost:
+        type: "number"
+        description: "融資の返済にかかる総費用。"
+        format: "float"
+        example: 556.2
+    additionalProperties: false
+    description: "見積もり対象融資の毎月の返済額と総費用"
+tags: []

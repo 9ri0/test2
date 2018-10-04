@@ -1,0 +1,130 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "resultsearch"
+  title: "API1"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/resultsearch"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  oauth-1:
+    type: "oauth2"
+    description: ""
+    flow: "accessCode"
+    authorizationUrl: "https://datapower/org01/cat01/oauthapi/oauth2/authorize"
+    scopes:
+      address: ""
+    tokenUrl: "https://datapower/org01/cat01/oauthapi/oauth2/token"
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- clientIdHeader: []
+  oauth-1:
+  - "address"
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        target-url: "http://133.166.204.118/mysql?&cd=$(request.parameters.cd)&from=$(request.parameters.from)&to=$(request.parameters.to)"
+    - if:
+        title: "if"
+        condition: "var cntdef = 20; var isChecked = false; var msgbdy = apim.getvariable('message.body');\
+          \ msgbdy = JSON.stringify(msgbdy); console.error(\"json %s\",(msgbdy));\
+          \ var cnt = msgbdy.length; console.error(\"json %s\",(cnt)); if(cnt >= cntdef){\
+          \ isChecked = true; console.error(\"json %s\",(isChecked)); }else{ isChecked\
+          \ = false; console.error(\"json %s\",(isChecked)); }\n\nisChecked != true;"
+        execute:
+        - throw:
+            title: "throw"
+            version: "1.0.0"
+            name: "notfound"
+        version: "1.0.0"
+    - activity-log:
+        title: "activity-log"
+        content: "activity"
+        error-content: "payload"
+        version: "1.0.0"
+    catch:
+    - errors:
+      - "notfound"
+      execute:
+      - set-variable:
+          title: "notfound"
+          actions:
+          - set: "message.body"
+            value: "{\\\"message\\\":\\\"404 Not Found Error\\\"}"
+          - set: "message.status.code"
+            value: "404"
+          - set: "message.headers.content-type"
+            value: "application/json"
+          version: "1.0.0"
+  phase: "realized"
+paths:
+  /mysql:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+          schema:
+            $ref: "#/definitions/result"
+        400:
+          description: "400 Not Found Error"
+          schema:
+            type: "object"
+      parameters:
+      - name: "cd"
+        type: "string"
+        required: true
+        in: "query"
+        description: "取引先コード"
+      - name: "from"
+        type: "string"
+        required: true
+        in: "query"
+        description: "開始日"
+      - name: "to"
+        type: "string"
+        required: true
+        in: "query"
+        description: "終了日"
+definitions:
+  result:
+    properties:
+      CHARGE_YM:
+        type: "string"
+        description: "年月度"
+      CHARGE_YMD:
+        type: "string"
+        description: "計上日"
+      SECT_DISPLAY_CD:
+        type: "string"
+        description: "計上課コード"
+      SECT_NAME:
+        type: "string"
+        description: "計上課名称"
+      SALES_OPPONENT_CD:
+        type: "string"
+        description: "計上部コード"
+      SALES_OPPONENT_NAME:
+        type: "string"
+        description: "計上部名称"
+      CHARGE_EMPLOYEE_NO:
+        type: "string"
+        description: "取引先コード"
+      CHARGE_EMPLOYEE_NAME:
+        type: "string"
+        description: "取引先名称"
+    additionalProperties: false
+tags: []

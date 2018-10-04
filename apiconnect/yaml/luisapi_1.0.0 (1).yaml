@@ -1,0 +1,64 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "luisapi"
+  title: "LUISAPI"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/luisapi"
+securityDefinitions:
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- {}
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        target-url: "https://southeastasia.api.cognitive.microsoft.com/luis/v2.0/apps/810a8d60-80f8-44a1-b74a-8775401047e3?subscription-key=$(request.parameters.subscription-key)&verbose=$(request.parameters.verbose)&timezoneOffset=$(request.parameters.timezoneOffset)&q=$(request.parameters.q)"
+    - gatewayscript:
+        title: "gatewayscript"
+        version: "1.0.0"
+        source: "var apic = require('./apim.custom.js');\r\n\r\nconsole.options({'category':'http'}).error(\r\
+          \n  apic.getContext('system.datetime') + ',' +\r\n  apic.getContext('api.name')\
+          \ + ',' +\r\n  apic.getContext('client.app.id') + ',' +\r\n  apic.getContext('client.org.name')\r\
+          \n);"
+    catch: []
+  phase: "realized"
+paths:
+  /810a8d60-80f8-44a1-b74a-8775401047e3:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+      parameters:
+      - name: "subscription-key"
+        type: "string"
+        required: true
+        in: "query"
+        description: "LUISサブスクリプションキー(秘密)"
+      - name: "verbose"
+        type: "boolean"
+        required: true
+        in: "query"
+        description: "トップスコア以外も受け取るためのフラグ"
+      - name: "timezoneOffset"
+        type: "integer"
+        required: true
+        in: "query"
+        description: "UTCとの時差"
+        format: "int32"
+      - name: "q"
+        type: "string"
+        required: true
+        in: "query"
+        description: "質問文章"
+tags: []

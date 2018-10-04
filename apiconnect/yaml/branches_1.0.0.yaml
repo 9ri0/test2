@@ -1,0 +1,77 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "branches"
+  title: "branches"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/branches"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- {}
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        target-url: "https://apim-services.mybluemix.net/banka/v1/branches"
+        title: "branches"
+    catch:
+    - errors: []
+      execute: []
+  phase: "specified"
+paths:
+  /details:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+          schema:
+            $ref: "#/definitions/branch"
+      summary: "支店の詳細"
+      description: "status bank of a"
+definitions:
+  address:
+    properties:
+      street1:
+        type: "string"
+        example: "4660"
+      street2:
+        type: "string"
+        example: "suite300"
+      city:
+        type: "string"
+        example: "san diego"
+      state:
+        type: "string"
+        example: "CA"
+      zip_code:
+        type: "string"
+        example: "92122"
+    additionalProperties: false
+    description: "the format of the address object"
+  branch:
+    properties:
+      address:
+        $ref: "#/definitions/address"
+      type:
+        type: "string"
+        example: "ATM"
+      id:
+        type: "string"
+        example: "9d72ece0-7e7b-11e5-9038-55f9f9c08c06"
+    additionalProperties: false
+tags: []

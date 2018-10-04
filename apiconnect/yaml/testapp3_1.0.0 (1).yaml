@@ -1,0 +1,131 @@
+---
+swagger: "2.0"
+info:
+  description: "住所検索API"
+  version: "1.0.0"
+  title: "AddressAPI_new"
+  x-ibm-name: "testapp3"
+host: "liberty01"
+basePath: "/testapp3/v1"
+schemes:
+- "https"
+paths:
+  /address:
+    get:
+      summary: "Get address from zipcode"
+      description: ""
+      operationId: "getAddressByZipcode"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "zipcode"
+        in: "query"
+        required: true
+        type: "string"
+        pattern: "[0-9]{7}"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Address"
+        400:
+          description: "Invalid zipcode supplied"
+        404:
+          description: "Address not found"
+definitions:
+  Address:
+    type: "object"
+    properties:
+      state:
+        type: "string"
+        format: "string"
+      state_kana:
+        type: "string"
+        format: "string"
+      city:
+        type: "string"
+        format: "string"
+      city_kana:
+        type: "string"
+        format: "string"
+      address:
+        type: "string"
+        format: "string"
+      address_kana:
+        type: "string"
+        format: "string"
+      company:
+        type: "string"
+        format: "string"
+      company_kana:
+        type: "string"
+        format: "string"
+x-ibm-configuration:
+  enforced: true
+  testable: true
+  phase: "realized"
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        title: "住所API（内部API）呼び出し"
+        timeout: 10
+        verb: "GET"
+        cache-response: "no-cache"
+        cache-ttl: 900
+        version: "1.0.0"
+        description: "内部APIの住所APIを呼び出す"
+        target-url: "http://192.168.26.144:9080$(request.path)$(request.search)"
+        tls-profile: ""
+        password: "1qazxsw2"
+        username: "user01"
+    - activity-log:
+        title: "activity-log"
+        content: "header"
+        error-content: "payload"
+        version: "1.0.0"
+    catch:
+    - default:
+      - gatewayscript:
+          title: "gatewayscript"
+          version: "1.0.0"
+          source: "// エラー応答\r\nvar apim = require('./apim.custom.js');\r\nvar response\r\
+            \n    = {'httpCode':''\r\n        , 'httpMessage':''\r\n        , 'errorCode':''\r\
+            \n        , 'moreInformation':''};\r\nresponse.httpCode = '500';\r\nresponse.httpMessage\
+            \ = 'Internal Server Error';\r\nresponse.errorCode = 'API00001';\r\n//response.moreInformation\
+            \ = 'システムエラー';\r\n//apim.setvariable('message.body', response);\r\n\r\n\
+            // 監視ログ／エラーログ出力\r\nvar clientAppName = apim.getvariable('client.app.name');\r\
+            \nvar xTransactionId = apim.getvariable('request.headers.x-transaction-id');\r\
+            \nvar monitorLogMessge\r\n    = clientAppName + ','\r\n    + xTransactionId+\
+            \ ','\r\n    + response.errorCode + ','\r\n    + response.moreInformation;\r\
+            \nvar errorTraceLogMessage\r\n    = clientAppName + ','\r\n    + xTransactionId\
+            \ + ','\r\n    + response.errorCode + ','\r\n    + JSON.stringify(session.name('policy').getVar('fw/exception'));\r\
+            \n\r\nresponse.moreInformation = errorTraceLogMessage;\r\napim.setvariable('message.body',\
+            \ response);\r\n\r\nconsole.options({'category':'mgmt'}).error(monitorLogMessge);\r\
+            \nconsole.options({'category':'mgmt'}).error(errorTraceLogMessage);\r\n"
+securityDefinitions:
+  OAuth definition:
+    type: "oauth2"
+    description: ""
+    flow: "accessCode"
+    authorizationUrl: "https://192.168.26.200/org01/cat01/oauthend/oauth2/authorize"
+    scopes:
+      address: ""
+    tokenUrl: "https://192.168.26.200/org01/cat01/oauthend/oauth2/token"
+  basic:
+    type: "basic"
+    description: "basic"
+    x-ibm-authentication-registry: "ldapregistory01"
+  X-IBM-Client-Id:
+    type: "apiKey"
+    description: ""
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- OAuth definition:
+  - "address"
+consumes:
+- "application/json"
+produces:
+- "application/json"

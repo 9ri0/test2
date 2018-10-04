@@ -1,0 +1,95 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "partneridentify"
+  title: "PartnerIdentify"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  oauth-1:
+    type: "oauth2"
+    description: ""
+    flow: "accessCode"
+    authorizationUrl: "https://192.168.26.200/org01/cat01/oauthend/oauth2/authorize"
+    scopes:
+      address: ""
+    tokenUrl: "https://192.168.26.200/org01/cat01/oauthend/oauth2/token"
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- oauth-1:
+  - "address"
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        target-url: "https://sapap501.japaneast.cloudapp.azure.com/search_company?&word=$(request.parameters.word)"
+    - if:
+        title: "if"
+        condition: "var cntdef = 20; var isChecked = false; var msgbdy = apim.getvariable('message.body');\
+          \ msgbdy = JSON.stringify(msgbdy); console.error(\"json %s\",(msgbdy));\
+          \ var cnt = msgbdy.length; console.error(\"json %s\",(cnt)); if(cnt >= cntdef){\
+          \ isChecked = true; console.error(\"json %s\",(isChecked)); }else{ isChecked\
+          \ = false; console.error(\"json %s\",(isChecked)); }\n\nisChecked != true;"
+        execute:
+        - throw:
+            title: "throw"
+            version: "1.0.0"
+            name: "notfound"
+        version: "1.0.0"
+    catch:
+    - errors:
+      - "notfound"
+      execute:
+      - set-variable:
+          title: "notfound"
+          actions:
+          - set: "message.body"
+            value: "{\\\"message\\\":\\\"404 Not Found Error\\\"}"
+          - set: "message.status.code"
+            value: "404"
+          - set: "message.headers.content-type"
+            value: "application/json"
+          version: "1.0.0"
+  phase: "realized"
+paths:
+  /search_company:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+          schema:
+            $ref: "#/definitions/partner"
+      parameters:
+      - name: "word"
+        type: "string"
+        required: true
+        in: "query"
+definitions:
+  partner:
+    properties:
+      cmpny_cd:
+        type: "string"
+        description: "取引先コード"
+      cmpny_nm:
+        type: "string"
+        description: "取引先名称"
+      t_score:
+        type: "integer"
+        description: "スコア"
+        format: "int32"
+    additionalProperties: false
+tags: []
+basePath: "/partneridentify"

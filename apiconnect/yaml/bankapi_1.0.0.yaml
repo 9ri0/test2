@@ -1,0 +1,92 @@
+---
+swagger: "2.0"
+info:
+  description: "bankAPI"
+  version: "1.0.0"
+  title: "bankAPI"
+  x-ibm-name: "bankapi"
+host: "$(catalog.host)"
+basePath: "/test/v1"
+schemes:
+- "https"
+paths:
+  /details:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+          schema:
+            $ref: "#/definitions/branch"
+      summary: "syousai"
+      description: "status of bank a"
+definitions:
+  branch:
+    properties:
+      id:
+        type: "string"
+        description: "支店のid"
+        example: "9d72ece0-7e7b-11e5-9038-55f9f9c08c06"
+      type:
+        type: "string"
+        description: "支店のtype"
+        example: "ATM"
+      address:
+        description: "支店の所在地"
+        $ref: "#/definitions/address"
+    additionalProperties: false
+    description: "branch フィールドの形式"
+  address:
+    properties:
+      state:
+        type: "string"
+        example: "CA"
+        description: "住所の都道府県"
+      zip_code:
+        type: "string"
+        example: "92122"
+        description: "住所の郵便番号"
+      street1:
+        type: "string"
+        example: "4660 La Jolla Village"
+        description: "住所の最初の行"
+      street2:
+        type: "string"
+        example: "Suite 300"
+        description: "住所2行目"
+      city:
+        type: "string"
+        example: "San Diego"
+        description: "住所の市区町村"
+    additionalProperties: false
+    description: "The format of the address object"
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - invoke:
+        title: "bankapi"
+        timeout: 10
+        verb: "GET"
+        cache-response: "no-cache"
+        cache-ttl: 900
+        version: "1.0.0"
+        description: "bankapi"
+        target-url: "https://192.168.26.200/org01/cat01/test/v1/details"
+    catch: []
+  phase: "realized"
+  gateway: "datapower-gateway"
+securityDefinitions:
+  X-IBM-Client-Id:
+    type: "apiKey"
+    description: ""
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- {}
+consumes:
+- "application/json"
+produces:
+- "application/json"

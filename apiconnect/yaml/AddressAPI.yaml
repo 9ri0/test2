@@ -1,0 +1,75 @@
+---
+swagger: "2.0"
+info:
+  description: 住所検索API
+  version: 1.0.0
+  title: AddressAPI
+  x-ibm-name: addressapi
+host: liberty01
+basePath: /org01/cat01/addressapi/v1
+schemes:
+- https
+paths:
+  /address:
+    get:
+      summary: Get address from zipcode
+      description: ""
+      operationId: getAddressByZipcode
+      produces:
+      - application/json
+      parameters:
+      - name: zipcode
+        in: query
+        required: true
+        type: string
+        pattern: '[0-9]{7}'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Address'
+        400:
+          description: Invalid zipcode supplied
+        404:
+          description: Address not found
+definitions:
+  Address:
+    type: object
+    properties:
+      state:
+        type: string
+        format: string
+      state_kana:
+        type: string
+        format: string
+      city:
+        type: string
+        format: string
+      city_kana:
+        type: string
+        format: string
+      address:
+        type: string
+        format: string
+      address_kana:
+        type: string
+        format: string
+      company:
+        type: string
+        format: string
+      company_kana:
+        type: string
+        format: string
+x-ibm-configuration:
+  enforced: true
+  testable: true
+  phase: realized
+securityDefinitions:
+  X-IBM-Client-Id:
+    type: apiKey
+    description: ""
+    in: header
+    name: X-IBM-Client-Id
+security:
+- X-IBM-Client-Id: []
+...
